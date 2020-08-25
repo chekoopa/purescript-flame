@@ -7,11 +7,13 @@ import Control.Monad.Except as CME
 import Data.Argonaut.Core as DAC
 import Data.Argonaut.Decode.Generic.Rep (class DecodeRep)
 import Data.Argonaut.Decode.Generic.Rep as DADEGR
+import Data.Argonaut.Decode.Error as DADEE
 import Data.Argonaut.Encode.Generic.Rep (class EncodeRep)
 import Data.Argonaut.Encode.Generic.Rep as DAEGR
 import Data.Argonaut.Parser as DAP
 import Data.Array ((:))
 import Data.Array as DA
+import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
@@ -58,7 +60,7 @@ serializedState selector = do
                 Nothing -> EE.throw $ "Error resuming application mount: serialized state not found!"
         where   decoding contents = do
                         json <- DAP.jsonParser contents
-                        DADEGR.genericDecodeJson json
+                        lmap DADEE.printJsonDecodeError (DADEGR.genericDecodeJson json)
 
 preMount :: forall model m message. Generic model m => EncodeRep m => QuerySelector -> PreApplication model message -> Effect String
 preMount (QuerySelector selector) application = do
